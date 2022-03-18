@@ -1,0 +1,95 @@
+// Define Flat Tree Structure and Helper Functions
+
+#ifndef treeUtilities_h
+#define treeUtilities_h
+
+//#include <TROOT.h>
+#include <TChain.h>
+#include <TTree.h>
+#include <TFile.h>
+
+class disEventTree {
+ public:
+
+  // Max Array Size
+  static const Int_t MAXPARTS = 500;
+
+  // Declare Leaf Types
+  Int_t code;
+  Float_t q2;
+  Float_t x;
+  Float_t y;
+  Float_t w2;
+  Float_t nu;
+  Int_t part_;
+  Int_t part_index[MAXPARTS];
+  Int_t part_id[MAXPARTS];
+  Int_t part_status[MAXPARTS];
+  Int_t part_mother1[MAXPARTS];
+  Int_t part_mother2[MAXPARTS];
+  Int_t part_isFinal[MAXPARTS];
+  Float_t part_px[MAXPARTS];
+  Float_t part_py[MAXPARTS];
+  Float_t part_pz[MAXPARTS];
+  Float_t part_e[MAXPARTS];
+  Float_t part_mass[MAXPARTS];
+  
+
+  // List Branches
+  //TBranch *b_q2;
+  //TBranch *b_x;
+  //TBranch *b_part_;
+  //TBranch *b_part_px;
+  //TBranch *b_part_py;
+  //TBranch *b_part_pz;
+  //TBranch *b_part_e;
+  //TBranch *b_part_isFinal;
+
+  disEventTree();
+  virtual ~disEventTree();
+  void initWrite(TTree *myTtree);
+  void fill(TTree *myTtree);
+};
+
+disEventTree::disEventTree()
+{
+  //initWrite(myTtree);
+}
+
+
+disEventTree::~disEventTree()
+{
+
+}
+
+
+void disEventTree::initWrite(TTree *myTtree)
+{
+  // Set Up Tree Struct For Writing
+
+  myTtree->Branch("code",&code,"code/I");
+  myTtree->Branch("q2",&q2,"q2/F");
+  myTtree->Branch("x",&x,"x/F");
+  myTtree->Branch("y",&y,"y/F");
+  myTtree->Branch("w2",&w2,"w2/F");
+  myTtree->Branch("nu",&nu,"nu/F");
+  myTtree->Branch("part_",&part_,"part_/I");
+  myTtree->Branch("part_index",part_index,"part_index[part_]/I");
+  myTtree->Branch("part_id",part_id,"part_id[part_]/I");
+  myTtree->Branch("part_status",part_status,"part_status[part_]/I");
+  myTtree->Branch("part_mother1",part_mother1,"part_mother1[part_]/I");
+  myTtree->Branch("part_mother2",part_mother2,"part_mother2[part_]/I");
+  myTtree->Branch("part_isFinal",part_isFinal,"part_isFinal[part_]/I");
+  myTtree->Branch("part_px",part_px,"part_px[part_]/F");
+  myTtree->Branch("part_py",part_py,"part_py[part_]/F");
+  myTtree->Branch("part_pz",part_pz,"part_pz[part_]/F");
+  myTtree->Branch("part_e",part_e,"part_e[part_]/F");
+  myTtree->Branch("part_mass",part_mass,"part_mass[part_]/F");
+}
+
+void disEventTree::fill(TTree *myTtree)
+{
+  myTtree->Fill();
+}
+
+#endif

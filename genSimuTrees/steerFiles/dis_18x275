@@ -1,0 +1,88 @@
+/*
+Steering file for LO DIS with realistic EIC beam parameters
+18x275 in High Acceptance Mode
+See CDR Table 3.4
+*/
+
+Main:numberOfEvents = 10000
+
+
+/*
+Beam Parameters
+*/
+
+Beams:frameType = 2
+Beams:idA = 2212
+Beams:idB = 11
+
+Beams:eA = 275
+Beams:eB = 18
+
+/*
+PDF Selection 2 = CTEQ5L
+PDF:GammaHardSet needed to try SAS Photon set, LHAPDF5 isn't linked yet ...
+PDF:extrapolate = on allow extrapolations to low x 
+*/
+PDF:pset = 2
+PDF:lepton = off
+
+
+/*
+Subprocess Selection
+*/
+WeakBosonExchange:ff2ff(t:gmZ) = on
+
+
+/*
+Shower Settings
+*/
+SpaceShower:dipoleRecoil = on
+SpaceShower:pTmaxMatch = 2
+TimeShower:QEDshowerByL = off
+
+
+/*
+Photoproduction Settings and Kinematics
+0 = All
+1 = Resolved
+2 = Direct
+*/
+
+
+/*
+PhaseSpace Settings
+
+PhaseSpace:pTHatMin = 1.0
+PhaseSpace:pTHatMinDiverge = 0.5
+*/
+PhaseSpace:mHatMin = 1.0
+PhaseSpace:pTHatMinDiverge = force 0.45
+PhaseSpace:Q2Min = 10.0
+
+
+/*
+Hadronization and Radiation Settings
+*/
+HadronLevel:Decay = on
+HadronLevel:all = on
+PartonLevel:ISR = on
+PartonLevel:MPI = off
+PartonLevel:FSR = on
+PromptPhoton:all = off
+
+
+/*
+Display Settings
+*/
+Init:showProcesses = off
+Init:showChangedSettings = off
+Init:showMultipartonInteractions = off
+Init:showChangedParticleData = off
+
+Next:numberShowInfo = 0
+Next:numberShowProcess = 0
+Next:numberShowEvent = 0
+Next:numberCount = 10000
+
+Random:setSeed = on
+Random:seed = 0
