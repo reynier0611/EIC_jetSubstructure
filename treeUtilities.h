@@ -10,6 +10,7 @@
 
 class disEventTree {
  public:
+  TTree *fChain; // Tree Being Read
 
   // Max Array Size
   static const Int_t MAXPARTS = 500;
@@ -49,6 +50,9 @@ class disEventTree {
   virtual ~disEventTree();
   void initWrite(TTree *myTtree);
   void fill(TTree *myTtree);
+  virtual Long64_t LoadTree(Long64_t entry);
+  virtual Int_t GetEntry(Long64_t entry);
+  void initRead(TTree *myTtree);
 };
 
 disEventTree::disEventTree()
@@ -60,6 +64,23 @@ disEventTree::disEventTree()
 disEventTree::~disEventTree()
 {
 
+}
+
+
+Int_t disEventTree::GetEntry(Long64_t entry)
+{
+  // Read contents of entry.
+  if (!fChain) return 0;
+  return fChain->GetEntry(entry);
+}
+
+
+Long64_t disEventTree::LoadTree(Long64_t entry)
+{
+  // Set the environment to read one entry
+  if (!fChain) return -5;
+  Long64_t centry = fChain->LoadTree(entry);
+  return centry;
 }
 
 
@@ -86,6 +107,32 @@ void disEventTree::initWrite(TTree *myTtree)
   myTtree->Branch("part_e",part_e,"part_e[part_]/F");
   myTtree->Branch("part_mass",part_mass,"part_mass[part_]/F");
 }
+
+
+void disEventTree::initRead(TTree *myTtree)
+{
+  fChain = myTtree;
+
+  fChain->SetBranchAddress("code",&code);
+  fChain->SetBranchAddress("q2",&q2);
+  fChain->SetBranchAddress("x",&x);
+  fChain->SetBranchAddress("y",&y);
+  fChain->SetBranchAddress("w2",&w2);
+  fChain->SetBranchAddress("nu",&nu);
+  fChain->SetBranchAddress("part_",&part_);
+  fChain->SetBranchAddress("part_index",part_index);
+  fChain->SetBranchAddress("part_id",part_id);
+  fChain->SetBranchAddress("part_status",part_status);
+  fChain->SetBranchAddress("part_mother1",part_mother1);
+  fChain->SetBranchAddress("part_mother2",part_mother2);
+  fChain->SetBranchAddress("part_isFinal",part_isFinal);
+  fChain->SetBranchAddress("part_px",part_px);
+  fChain->SetBranchAddress("part_py",part_py);
+  fChain->SetBranchAddress("part_pz",part_pz);
+  fChain->SetBranchAddress("part_e",part_e);
+  fChain->SetBranchAddress("part_mass",part_mass);
+}
+
 
 void disEventTree::fill(TTree *myTtree)
 {
