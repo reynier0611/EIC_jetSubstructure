@@ -4,8 +4,6 @@
 #define HISTOGRAMUTILITIES
 
 #include "fastjet/ClusterSequence.hh"
-#include "fastjet/contrib/Recluster.hh"
-#include "fastjet/contrib/SoftDrop.hh"
 
 #include "TH1.h"
 #include "TH2.h"
@@ -91,27 +89,44 @@ struct jetSoftCollection {
 
   // Jet Quantities
   TH2D *jetGroomVsOrigPtHist;
+  TH2D *jetGroomVsOrigPtSubHist;
+  TH2D *jetGroomVsOrigPtNoSubHist;
   TH1D *jetDeltaRHist; 
   TH1D *jetZHist;
   TH2D *jetDeltaRVsZHist;
   TH2D *testParametersHist;
+  TH2D *testModVsOrigConstituents;
 
   void init(const char *name, const char* title)
   {
     jetGroomVsOrigPtHist = new TH2D(Form("jetGroomVsOrigPt_%s",name),Form("Groomed Vs Original Jet Pt: %s",title),200,0.,100.,200,0.,100.);
-    jetDeltaRHist = new TH1D(Form("jetDeltaR_%s",name),Form("Delta R Between Subjets: %s",title),1000,0.,2.);
-    jetZHist = new TH1D(Form("jetZ_%s",name),Form("Symmetry Measure of Subjets: %s",title),1000,0.,2.);
-    jetDeltaRVsZHist = new TH2D(Form("jetDeltaRVsZ_%s",name),Form("Delta R Vs Symmetry Measure of Subjets: %s",title),1000,0.,2.,1000,0.,2.);
+    jetGroomVsOrigPtSubHist = new TH2D(Form("jetGroomVsOrigPtSub_%s",name),Form("Groomed Vs Original Jet Pt (Has Substructure): %s",title),200,0.,100.,200,0.,100.);
+    jetGroomVsOrigPtNoSubHist = new TH2D(Form("jetGroomVsOrigPtNoSub_%s",name),Form("Groomed Vs Original Jet Pt (No Substructure): %s",title),200,0.,100.,200,0.,100.);
+    jetDeltaRHist = new TH1D(Form("jetDeltaR_%s",name),Form("Delta R Between Subjets: %s",title),500,0.,2.);
+    jetZHist = new TH1D(Form("jetZ_%s",name),Form("Symmetry Measure of Subjets: %s",title),500,0.,2.);
+    jetDeltaRVsZHist = new TH2D(Form("jetDeltaRVsZ_%s",name),Form("Delta R Vs Symmetry Measure of Subjets: %s",title),500,0.,2.,500,0.,2.);
     testParametersHist = new TH2D(Form("testParameters_%s",name),Form("Z and Beta Test: %s",title),10,0.,0.5,10,0.,5.);
+    testModVsOrigConstituents = new TH2D(Form("testModVsOrigConstituents_%s",name),Form("Mod Vs Orig Constituents: %s",title),50,0.,50.,50,0.,50.);
   }
 
   void fillSoftJetCollection(const PseudoJet jet, const PseudoJet sdJet, double z, double beta)
   {
+    int sub = -1;
+    if(sdJet.structure_of<contrib::SoftDrop>().has_substructure()) sub = 1;
+    if(!sdJet.structure_of<contrib::SoftDrop>().has_substructure()) sub = 0;
+
     jetGroomVsOrigPtHist->Fill(jet.pt(),sdJet.pt());
+    if(sdJet.structure_of<contrib::SoftDrop>().has_substructure()) jetGroomVsOrigPtSubHist->Fill(jet.pt(),sdJet.pt());
+    if(!sdJet.structure_of<contrib::SoftDrop>().has_substructure()) jetGroomVsOrigPtNoSubHist->Fill(jet.pt(),sdJet.pt());
     jetDeltaRHist->Fill(sdJet.structure_of<contrib::SoftDrop>().delta_R());
     jetZHist->Fill(sdJet.structure_of<contrib::SoftDrop>().symmetry());
     jetDeltaRVsZHist->Fill(sdJet.structure_of<contrib::SoftDrop>().symmetry(),sdJet.structure_of<contrib::SoftDrop>().delta_R());
     testParametersHist->Fill(z,beta);
+
+    // Look at Jet Contents
+    vector<PseudoJet> origConstit = jet.constituents();
+    vector<PseudoJet> constit = sdJet.constituents();
+    testModVsOrigConstituents->Fill(origConstit.size(),constit.size());
   }
 };
 

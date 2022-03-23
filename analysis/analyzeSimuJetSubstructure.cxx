@@ -64,7 +64,8 @@ int main(int argc, char* argv[])
 
   TChain *myChain = new TChain("eventT");
   //myChain->Add(Form("/gpfs02/eic/bpage/home/ATHENA/fullSimuFiles/canyonlands-2.1/pythia8NCDIS_18x275_minQ2=1_beamEffects_xAngle=-0.025_hiDiv_vtxfix_%d_*.root",));
-  myChain->Add("/direct/eic+u/bpage/ATHENA/jetWork/generatorSubstructure/genSimuTrees/test.hist.root");
+  //myChain->Add("/direct/eic+u/bpage/ATHENA/jetWork/generatorSubstructure/genSimuTrees/test.hist.root");
+  myChain->Add("/gpfs02/eic/bpage/home/ATHENA/jetWork/generatorSubstructure/genSimuTrees/test1M.hist.root");
 
   //cout << "Added File to Tree" << endl;
 
@@ -78,6 +79,12 @@ int main(int argc, char* argv[])
   // Histograms
   TH1::SetDefaultSumw2(true);
   TH2::SetDefaultSumw2(true);
+
+  // Event Kinematics
+  TH2D *phaseSpaceHist = new TH2D("phaseSpace","Event Q2 Vs x",600,-5.,1.,400,0.,4.);
+  TH1D *inelasticityHist = new TH1D("inelasticity","Event y",600,-5.,1.);
+  TH1D *w2Hist = new TH1D("w2","Event W^2",2000,0.,200.);
+  TH1D *nuHist = new TH1D("nu","Event nu",1000,-5.,5.);
 
   // Generated Particles
   partCollection pC;
@@ -126,10 +133,6 @@ int main(int argc, char* argv[])
   TH1D *numParts = new TH1D("numParts","",200,0.,200.);
   TH1D *numPartsJet = new TH1D("numPartsJet","",200,0.,200.);
 
-  //TH1D *jetPtHist = new TH1D("jetPt","",200,0.,100.);
-  //TH1D *jetEtaHist = new TH1D("jetEta","",100,-5.,5.);
-  //TH2D *jetPtVsEHist = new TH2D("jetPtVsE","",300,0.,300,200,0.,100.);
-
 
   // Loop Over Events
   Long64_t nentries = etr.fChain->GetEntries();
@@ -143,9 +146,13 @@ int main(int argc, char* argv[])
       if(ientry < 0) break;
       nb = etr.GetEntry(jentry);
 
-      if(ientry%10000 == 0) cout << "Event " << ientry << endl;
+      if(ientry%50000 == 0) cout << "Event " << ientry << endl;
 
-      // Event Level Quantitiew
+      // Event Level Quantities
+      phaseSpaceHist->Fill(etr.x,etr.q2);
+      inelasticityHist->Fill(etr.y);
+      w2Hist->Fill(etr.w2);
+      nuHist->Fill(etr.nu);
 
 
       // Create FastJet Particle Containers
@@ -228,12 +235,13 @@ int main(int argc, char* argv[])
 		  // Place Kin Cuts on Individual Jets
 		  if(jetsVec[jV][jn].pt() < 5.0) continue;
 		  if(TMath::Abs(jetsVec[jV][jn].eta()) > 3.0) continue;
-
-		  // Fill Baseline Jet Histograms
-		  jC[jV].fillJetCollection(jetsVec[jV][jn]);
 		  
 		  // Get Constituents for Recluster
 		  vector<PseudoJet> constituents = jetsVec[jV][jn].constituents();
+		  if(constituents.size() == 1) continue;
+
+		  // Fill Baseline Jet Histograms
+		  jC[jV].fillJetCollection(jetsVec[jV][jn]);
 
 		  // Recluster with Cambridge Aachen for Grooming
 		  double R25 = 2.5;

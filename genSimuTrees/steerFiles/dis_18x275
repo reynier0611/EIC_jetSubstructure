@@ -4,7 +4,7 @@ Steering file for LO DIS with realistic EIC beam parameters
 See CDR Table 3.4
 */
 
-Main:numberOfEvents = 10000
+Main:numberOfEvents = 1000000
 
 
 /*
