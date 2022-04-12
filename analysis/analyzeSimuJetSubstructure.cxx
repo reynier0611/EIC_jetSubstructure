@@ -69,6 +69,9 @@ int main(int argc, char* argv[])
 	// Open Output Root File
 	TFile *ofile = TFile::Open(output,"recreate");
 
+	ClusterSequence header;
+	header.print_banner();
+
 	// ----------------------------------------------------------------------------------
 	// Histograms
 	TH1::SetDefaultSumw2(true);
@@ -244,16 +247,16 @@ int main(int argc, char* argv[])
 					// Grooming
 					for(int zc=0; zc<3; zc++)
 					{
-						for(int beta=0; beta<3; beta++)
+						for(int b=0; b<3; b++)
 						{
-							contrib::SoftDrop sd( beta[beta], zcut[zc]);
+							contrib::SoftDrop sd( beta[b], zcut[zc]);
 							PseudoJet sd_jet = sd( jets_CA[0]);
 
 							// Find Flat Index (Should be the same as in container initilization)
-							int flatIndex = 3*zc+beta;
+							int flatIndex = 3*zc+b;
 
 							// Fill Soft-Drop Jet Histograms
-							jSC[jV][flatIndex].fillSoftJetCollection(jetsVec[jV][jn],sd_jet,zcut[zc],beta[beta]);
+							jSC[jV][flatIndex].fillSoftJetCollection(jetsVec[jV][jn],sd_jet,zcut[zc],beta[b]);
 						}
 					}			  
 				} // End loop through jets
