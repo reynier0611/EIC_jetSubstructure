@@ -19,16 +19,10 @@ LDFLAGS     += -lRecursiveTools
 IDIR = ../
 DEPS = treeUtilities.h
 
-all : run.exe
+all : code.exe
 
-#run.exe: analyzeJetSubstructure.o 
-#	$(CXX) analyzeJetSubstructure.o -o run.exe $(LDFLAGS) 
-
-#analyzeJetSubstructure.o : analyzeJetSubstructure.cxx
-#	$(CXX) $(CXXFLAGS) -c analyzeJetSubstructure.cxx -o analyzeJetSubstructure.o -I.
-
-run.exe: analyzeSimuJetSubstructure.o
-	$(CXX) analyzeSimuJetSubstructure.o -o run.exe $(LDFLAGS)
+code.exe: analyzeSimuJetSubstructure.o
+	$(CXX) analyzeSimuJetSubstructure.o -o code.exe $(LDFLAGS)
 
 analyzeSimuJetSubstructure.o: analyzeSimuJetSubstructure.cxx $(IDIR)/$(DEPS) histogramUtilities.h
 	$(CXX) $(CXXFLAGS) -c analyzeSimuJetSubstructure.cxx -I. -I..

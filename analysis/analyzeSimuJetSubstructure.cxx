@@ -37,7 +37,7 @@ int main(int argc, char* argv[])
 		cerr << "***************************************************" << endl;
 		cerr << "Wrong number of arguments" << endl;
 		cerr << "Run this code as:" << endl;
-		cerr << "./analyzer /path/to/input.root /path/to/output.root" << endl;
+		cerr << "./code.exe /path/to/input.root /path/to/output.root" << endl;
 		cerr << "***************************************************" << endl;
 		exit(EXIT_FAILURE);
 	}
@@ -51,9 +51,14 @@ int main(int argc, char* argv[])
 	// Jets
 	double jetR[] = {1.0};
 	const int size_jetR = sizeof(jetR)/sizeof(*jetR);
-	double min_jet_pT = 1.0; // GeV
-	// ----------------------------------------------------------------------------------
+	double min_jet_pT = 5.0; // GeV
+	double max_abs_eta = 3.0;
 
+	// grooming parameters
+	double zcut[] = {0.05,0.1,0.2};
+        double beta[] = {0.0,1.0,2.0};
+	// ----------------------------------------------------------------------------------
+	// Input and output root files
 	TChain *myChain = new TChain("eventT");
 	myChain->Add(inputFiles);
 
@@ -64,6 +69,7 @@ int main(int argc, char* argv[])
 	// Open Output Root File
 	TFile *ofile = TFile::Open(output,"recreate");
 
+	// ----------------------------------------------------------------------------------
 	// Histograms
 	TH1::SetDefaultSumw2(true);
 	TH2::SetDefaultSumw2(true);
@@ -134,9 +140,9 @@ int main(int argc, char* argv[])
 		if(ientry < 0) break;
 		nb = etr.GetEntry(jentry);
 
-		if(ientry%50000 == 0) cout << "Event " << ientry << endl;
+		if(ientry%50000 == 0) cout << "Event " << ientry << " of " << nentries << endl;
 
-		// Event Level Quantities
+		// Event-Level Quantities
 		phaseSpaceHist->Fill(etr.x,etr.q2);
 		inelasticityHist->Fill(etr.y);
 		w2Hist->Fill(etr.w2);
@@ -148,15 +154,16 @@ int main(int argc, char* argv[])
 
 		numParts->Fill(etr.part_);
 	
-		// -------------------------------------------------------------
-		// Loop Over Particles
 		int numJetParts = 0;
+
+		// -------------------------------------------------------------
+		// Loop Over Particles	
 		for(int i=0; i<etr.part_; i++)
 		{
 			// Fill Particle Level Plots
-			Float_t px = etr.part_px[i];
-			Float_t py = etr.part_py[i];
-			Float_t pz = etr.part_pz[i];
+			Float_t px = etr.part_px[i]; // p_x
+			Float_t py = etr.part_py[i]; // p_y
+			Float_t pz = etr.part_pz[i]; // p_z
 			Float_t e = etr.part_e[i];
 			Float_t m = etr.part_mass[i];
 			Int_t final = etr.part_isFinal[i];
@@ -170,7 +177,7 @@ int main(int argc, char* argv[])
 			// Populate FastJet
 			if(final == 1 && TMath::Abs(partP.PseudoRapidity()) < 4.0)
 			{
-				if(pdg != 11)
+				if(pdg != 11) // skip the scattered electron
 				{
 					fastjet::PseudoJet p(px,py,pz,e);
 					p.set_user_index(index);
@@ -191,37 +198,35 @@ int main(int argc, char* argv[])
 		}
 		numPartsJet->Fill(numJetParts);
 
+		// -------------------------------------------------------------
 		// Find Jets
 		// Loop Over Jet Radii
 		for(int rad=0; rad<size_jetR; rad++)
 		{
-			// Define Jet
 			JetDefinition jet_def_akt(antikt_algorithm,jetR[rad]);
-
-			// Cluster Particles
-			ClusterSequence cs_akt_lab(particles, jet_def_akt);
-			ClusterSequence cs_akt_lab_track(particlesTrack, jet_def_akt);
-
-			// Get Jets
+			Selector jet_selector = fastjet::SelectorPtMin(min_jet_pT) && fastjet::SelectorAbsEtaMax(max_abs_eta);
 			vector<vector<PseudoJet> > jetsVec; // Hold The Jet Vectors
 
 			// Full jet
-			vector<PseudoJet> jets_akt_lab = sorted_by_pt(cs_akt_lab.inclusive_jets(min_jet_pT));
-			jetsVec.push_back(jets_akt_lab);
+			ClusterSequence cs_akt_lab(particles, jet_def_akt);
+			vector<PseudoJet> jets_akt_lab = sorted_by_pt(cs_akt_lab.inclusive_jets());
+			vector<PseudoJet> jets_akt_lab_selected = jet_selector(jets_akt_lab);
+			jetsVec.push_back(jets_akt_lab_selected);
 
 			// Charged jets
-			vector<PseudoJet> jets_akt_lab_track = sorted_by_pt(cs_akt_lab_track.inclusive_jets(min_jet_pT));
-			jetsVec.push_back(jets_akt_lab_track);
+			ClusterSequence cs_akt_lab_track(particlesTrack, jet_def_akt);
+			vector<PseudoJet> jets_akt_lab_track = sorted_by_pt(cs_akt_lab_track.inclusive_jets());
+			vector<PseudoJet> jets_akt_lab_track_selected = jet_selector(jets_akt_lab_track);
+			jetsVec.push_back(jets_akt_lab_track_selected);
 
 			// Loop Over Jet Types
 			for(int jV=0; jV<jetsVec.size(); jV++)
 			{
-				// Loop over jets of a given type
+				// Loop over jets of a given type (full or charged)
 				for(unsigned int jn=0; jn<jetsVec[jV].size(); jn++)
-				{
-					// Place Kin Cuts on Individual Jets
-					if(jetsVec[jV][jn].pt() < 5.0) continue;
-					if(TMath::Abs(jetsVec[jV][jn].eta()) > 3.0) continue;
+				{	
+					if(jetsVec[jV][jn].pt() < min_jet_pT || TMath::Abs(jetsVec[jV][jn].eta()) > max_abs_eta)
+						cout << "Found a jet that should have been removed by now" << endl;
 
 					// Get Constituents for Recluster
 					vector<PseudoJet> constituents = jetsVec[jV][jn].constituents();
@@ -236,29 +241,25 @@ int main(int argc, char* argv[])
 					ClusterSequence cs_CA(constituents, jet_def_CA);
 					vector<PseudoJet> jets_CA = sorted_by_pt(cs_CA.inclusive_jets(min_jet_pT));
 
-					// Setup Softdrop
-					double zVals[3] = {0.05,0.1,0.2};
-					double bVals[3] = {0.0,1.0,2.0};
-					for(int zcut=0; zcut<3; zcut++)
+					// Grooming
+					for(int zc=0; zc<3; zc++)
 					{
 						for(int beta=0; beta<3; beta++)
 						{
-							contrib::SoftDrop sd( bVals[beta], zVals[zcut]);
+							contrib::SoftDrop sd( beta[beta], zcut[zc]);
 							PseudoJet sd_jet = sd( jets_CA[0]);
 
 							// Find Flat Index (Should be the same as in container initilization)
-							int flatIndex = 3*zcut+beta;
+							int flatIndex = 3*zc+beta;
 
 							// Fill Soft-Drop Jet Histograms
-							jSC[jV][flatIndex].fillSoftJetCollection(jetsVec[jV][jn],sd_jet,zVals[zcut],bVals[beta]);
+							jSC[jV][flatIndex].fillSoftJetCollection(jetsVec[jV][jn],sd_jet,zcut[zc],beta[beta]);
 						}
 					}			  
-				} // End Loop Through Jets
-			} // End Loop Through Jet Types
-
-		} // End Loop Over Jet Radii
-
-	}
+				} // End loop through jets
+			} // End loop through jet types
+		} // End loop over jet radii
+	} // End loop over event
 
 	// Write and Close Root File
 	ofile->Write();

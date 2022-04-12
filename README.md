@@ -5,3 +5,11 @@ The dir genSimuTrees/ contains the code to run simulation and store output in a 
 The dir analysis/ contains the code to read in a previously generated simulation tree and run analyses on the events within. The program analyzeSimuJetSubstructure.cxx generates jets from the particles saved in the simulation tree and runs various substructure analyses. The file histogramUtilities.h defines and handles filling many of the relevant histograms.
 
 Finally, the treeUtilities.h file in the top-level directory defines the common tree structure and provides helper functions that both the tree generation and analysis codes use to read/write the trees.
+
+## Step 1 - Generate events
+
+```
+cd genSimuTrees
+make 
+./runPyTree.exe steerFiles/dis_18x275 outfile.root
+```
