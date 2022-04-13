@@ -18,34 +18,36 @@ using namespace Pythia8;
 
 #include "treeUtilities.h"
 
-
+// =======================================================================================================================================
+// Main function
 int main(int argc, char* argv[])
 {
-	if(argc != 3)
+	if(argc != 4)
 	{
-		cerr << "Wrong number of arguments" << endl;
-		cerr << "program.exe steer out.hist.root" << endl;
-		exit(EXIT_FAILURE);
+		cerr << "***********************************************************" << endl;
+                cerr << "Wrong number of arguments" << endl;
+                cerr << "Run this code as:" << endl;
+                cerr << "./runPyTree.exe /path/to/steer_file nevents /path/to/output.root" << endl;
+		cerr << "example:" << endl;
+		cerr << "./runPyTree.exe steerFiles/dis_18x275 1000 outfile.root" << endl;
+		cerr << "***********************************************************" << endl;
+                exit(EXIT_FAILURE);
 	}
+	// ----------------------------------------------------------------------------------
+        // Gathering some needed variables
+	const char* rootOut = argv[3];
 
-	// Set Parameters
-	const char* rootOut = argv[2];
-	//const char* rootOut="test.hist.root";
-
-	// Check Parameters
-	cout << "Root Output = " << rootOut << endl;
+	cout << "Output root file = " << rootOut << endl;
 
 	// Open Root File
 	TFile *ofile = TFile::Open(rootOut,"recreate");
-
-	// Create Output Tree
 	TTree *eventT = new TTree("eventT","Tree Holding Event and Particle Information");
 
 	// Initilize Output Tree Structure
 	disEventTree et;
 	et.initWrite(eventT);
 
-
+	// ----------------------------------------------------------------------------------
 	// Histograms
 	TH2D *phaseSpaceHist = new TH2D("phaseSpaceHist","",600,-5.,1.,400,0.,4.);
 	TH1D *kinTestHist = new TH1D("kinTestHist","",1000,-1.,1.);
@@ -54,22 +56,22 @@ int main(int argc, char* argv[])
 	TH1D *nuHist = new TH1D("nuHist","",1000,-5.,5.);
 	TH2D *yVsNuHist = new TH2D("yVsNuHist","",1000,-5.,5.,600,-5.,1.);
 
-
 	// Set Up Pythia
 	Pythia8::Pythia p8;
 	Pythia8::Event &event = p8.event;
 
 	// Read in Steering File & Define Other Settings
 	p8.readFile(argv[1]);
-	//p8.readFile("dis_18x275.steer");
 	p8.readString("Main:timesAllowErrors = 1000");
 
 	// Initialize Pythia
 	p8.init(); 
 
-
+	// ----------------------------------------------------------------------------------
 	// Run Event Generation
 	int nevents = p8.mode("Main:numberOfEvents");
+	nevents = atoi(argv[2]);
+	cout << "N events = " << nevents << endl;
 	for(int ev=0; ev<nevents; ev++)
 	{
 		if(!p8.next()) continue;
