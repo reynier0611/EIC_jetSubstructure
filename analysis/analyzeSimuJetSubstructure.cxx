@@ -130,6 +130,13 @@ int main(int argc, char* argv[])
 	TH1D *numParts = new TH1D("numParts","",200,0.,200.);
 	TH1D *numPartsJet = new TH1D("numPartsJet","",200,0.,200.);
 
+	TH2D *** h2_WTA_Standard = new TH2D**[size_jetR];
+	for(int R=0; R<size_jetR; R++){
+		h2_WTA_Standard[R] = new TH2D*[2];
+		for(int i = 0 ; i < 2 ; i++){
+			h2_WTA_Standard[R][i] = new TH2D(Form("h2_WTA_Standard_R%.1f_%i",jetR[R],i),";p_{T};#DeltaR",100,0,100,100,0,jetR[R]);
+		}
+	}
 
 	// ----------------------------------------------------------------------------------
 	// Loop Over Events
@@ -222,7 +229,7 @@ int main(int argc, char* argv[])
 			vector<PseudoJet> jets_akt_lab_track_selected = jet_selector(jets_akt_lab_track);
 			jetsVec.push_back(jets_akt_lab_track_selected);
 
-			// Loop Over Jet Types
+			// Loop Over Jet Types (full and charged)
 			for(int jV=0; jV<jetsVec.size(); jV++)
 			{
 				// Loop over jets of a given type (full or charged)
@@ -244,6 +251,14 @@ int main(int argc, char* argv[])
 					ClusterSequence cs_CA(constituents, jet_def_CA);
 					vector<PseudoJet> jets_CA = sorted_by_pt(cs_CA.inclusive_jets(min_jet_pT));
 
+					// Recluster with WTA pT recombination scheme
+					JetDefinition jet_def_wta(fastjet::cambridge_algorithm,R25);
+					jet_def_wta.set_recombination_scheme(fastjet::WTA_pt_scheme);
+					ClusterSequence cs_WTA(constituents, jet_def_wta);
+					vector<PseudoJet> jets_WTA = sorted_by_pt(cs_WTA.inclusive_jets(min_jet_pT));
+
+					h2_WTA_Standard[rad][jV] -> Fill(jetsVec[jV][jn].pt(),jets_WTA[0].delta_R(jetsVec[jV][jn]));
+
 					// Grooming
 					for(int zc=0; zc<3; zc++)
 					{
@@ -252,7 +267,7 @@ int main(int argc, char* argv[])
 							contrib::SoftDrop sd( beta[b], zcut[zc]);
 							PseudoJet sd_jet = sd( jets_CA[0]);
 
-							// Find Flat Index (Should be the same as in container initilization)
+							// Find Flat Index (Should be the same as in container initialization)
 							int flatIndex = 3*zc+b;
 
 							// Fill Soft-Drop Jet Histograms
@@ -265,6 +280,13 @@ int main(int argc, char* argv[])
 	} // End loop over event
 
 	// Write and Close Root File
+	for(int R=0; R<size_jetR; R++){
+		for(int i = 0 ; i < 2 ; i++){
+			cout << R << " " << i << endl;
+			h2_WTA_Standard[R][i] -> Write();
+		}
+	}
+
 	ofile->Write();
 	ofile->Close();
 
